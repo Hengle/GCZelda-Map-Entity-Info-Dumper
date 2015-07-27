@@ -30,7 +30,8 @@ namespace CLI
             string folderRoot = @"E:\New_Data_Drive\WindwakerModding\De-Arc-ed Stage\";
             DirectoryInfo dirInfo = new DirectoryInfo(folderRoot);
 
-            HashSet<string> formattedData = new HashSet<string>();
+            string[] formattedOldData = File.ReadAllLines(@"C:\Users\Matt\Desktop\outputjson.json");
+            HashSet<string> formattedNewData = new HashSet<string>();
             while(true)
             {
                 Console.Clear();
@@ -42,7 +43,7 @@ namespace CLI
                     DirectoryInfo mapDirInfo = new DirectoryInfo(map.FullName);
                     foreach (var scene in map.GetDirectories())
                     {
-                        ProcessEntitiesForScene(scene.FullName, mapDirInfo.Name, fourCC, formattedData);
+                        ProcessEntitiesForScene(scene.FullName, mapDirInfo.Name, fourCC, formattedNewData);
                     }
                 }
 
@@ -52,7 +53,13 @@ namespace CLI
                     break;
             }
 
-            File.WriteAllLines("C:/Users/Matt/Desktop/outputjson.json", formattedData.ToArray());
+            foreach(var str in formattedOldData)
+            {
+                if (formattedNewData.Contains(str))
+                    formattedNewData.Remove(str);
+            }
+
+            File.WriteAllLines("C:/Users/Matt/Desktop/outputjson.json", formattedNewData.ToArray());
         }
 
         private static void ProcessEntitiesForScene(string folder, string mapName, string fourCC, HashSet<string> formattedData)
@@ -94,16 +101,20 @@ namespace CLI
                     chunks.Add(chunk);
                 }
 
-                ChunkHeader foundChunk = chunks.Find(x => x.FourCC == fourCC);
-                if (foundChunk != null)
+                for(int k = 0; k < chunkCount; k++)
                 {
-                    if(fourCC == "ACTR")
+                    if(fourCC.StartsWith("ACT"))
                     {
-                        reader.BaseStream.Position = foundChunk.ChunkOffset;
-                        for(int i = 0; i < foundChunk.ElementCount; i++)
+                        reader.BaseStream.Position = chunks[k].ChunkOffset;
+                        for (int i = 0; i < chunks[i].ElementCount; i++)
                         {
                             string name = reader.ReadString(8).Trim(new[] { '\0' });
                             reader.BaseStream.Position += 0x20 - 0x8;
+
+                            if(name == "TestPo")
+                            {
+                                Console.WriteLine("Weird.");
+                            }
                             
                             string outputFormat = "{{\"FourCC\" : \"{0}\", \"Category\" : \"Uncategorized\", \"TechnicalName\" : \"{1}\", \"DisplayName\" : \"{1}\", \"Keywords\" : [\"uncategorized\"]}},";
                             string outText = string.Format(outputFormat, fourCC, name);
@@ -115,8 +126,8 @@ namespace CLI
 
                     if (fourCC.StartsWith("SCO"))
                     {
-                        reader.BaseStream.Position = foundChunk.ChunkOffset;
-                        for (int i = 0; i < foundChunk.ElementCount; i++)
+                        reader.BaseStream.Position = chunks[k].ChunkOffset;
+                        for (int i = 0; i < chunks[k].ElementCount; i++)
                         {
                             string name = reader.ReadString(8).Trim(new[] { '\0' });
                             reader.BaseStream.Position += 0x24 - 0x8;
@@ -131,8 +142,8 @@ namespace CLI
 
                     if (fourCC == "TGDR")
                     {
-                        reader.BaseStream.Position = foundChunk.ChunkOffset;
-                        for (int i = 0; i < foundChunk.ElementCount; i++)
+                        reader.BaseStream.Position = chunks[k].ChunkOffset;
+                        for (int i = 0; i < chunks[k].ElementCount; i++)
                         {
                             string name = reader.ReadString(8).Trim(new[] { '\0' });
                             reader.BaseStream.Position += 0x24 - 0x8;
@@ -146,10 +157,10 @@ namespace CLI
                         }
                     }
 
-                    if (fourCC == "TRES")
+                    if (fourCC.StartsWith("TRE"))
                     {
-                        reader.BaseStream.Position = foundChunk.ChunkOffset;
-                        for (int i = 0; i < foundChunk.ElementCount; i++)
+                        reader.BaseStream.Position = chunks[k].ChunkOffset;
+                        for (int i = 0; i < chunks[k].ElementCount; i++)
                         {
                             string name = reader.ReadString(8).Trim(new[] { '\0' });
                             reader.BaseStream.Position += 0x20 - 0x8;
@@ -164,8 +175,8 @@ namespace CLI
 
                     if (fourCC == "DOOR")
                     {
-                        reader.BaseStream.Position = foundChunk.ChunkOffset;
-                        for (int i = 0; i < foundChunk.ElementCount; i++)
+                        reader.BaseStream.Position = chunks[k].ChunkOffset;
+                        for (int i = 0; i < chunks[k].ElementCount; i++)
                         {
                             string name = reader.ReadString(8).Trim(new[] { '\0' });
                             reader.BaseStream.Position += 0x24 - 0x8;
@@ -180,8 +191,8 @@ namespace CLI
 
                     if (fourCC == "TGOB")
                     {
-                        reader.BaseStream.Position = foundChunk.ChunkOffset;
-                        for (int i = 0; i < foundChunk.ElementCount; i++)
+                        reader.BaseStream.Position = chunks[k].ChunkOffset;
+                        for (int i = 0; i < chunks[k].ElementCount; i++)
                         {
                             string name = reader.ReadString(8).Trim(new[] { '\0' });
                             reader.BaseStream.Position += 0x20 - 0x8;
@@ -196,8 +207,8 @@ namespace CLI
 
                     if (fourCC == "TGSC")
                     {
-                        reader.BaseStream.Position = foundChunk.ChunkOffset;
-                        for (int i = 0; i < foundChunk.ElementCount; i++)
+                        reader.BaseStream.Position = chunks[k].ChunkOffset;
+                        for (int i = 0; i < chunks[k].ElementCount; i++)
                         {
                             string name = reader.ReadString(8).Trim(new[] { '\0' });
                             reader.BaseStream.Position += 0x24 - 0x8;

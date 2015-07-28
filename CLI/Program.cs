@@ -59,7 +59,7 @@ namespace CLI
                     formattedNewData.Remove(str);
             }
 
-            File.WriteAllLines("C:/Users/Matt/Desktop/outputjson.json", formattedNewData.ToArray());
+            File.WriteAllLines("C:/Users/Matt/Desktop/outputjson_delta.json", formattedNewData.ToArray());
         }
 
         private static void ProcessEntitiesForScene(string folder, string mapName, string fourCC, HashSet<string> formattedData)
@@ -103,10 +103,11 @@ namespace CLI
 
                 for(int k = 0; k < chunkCount; k++)
                 {
-                    if(fourCC.StartsWith("ACT"))
+                    if (chunks[k].FourCC.StartsWith("ACT"))
                     {
+                        chunks[k].FourCC = "ACTR";
                         reader.BaseStream.Position = chunks[k].ChunkOffset;
-                        for (int i = 0; i < chunks[i].ElementCount; i++)
+                        for (int i = 0; i < chunks[k].ElementCount; i++)
                         {
                             string name = reader.ReadString(8).Trim(new[] { '\0' });
                             reader.BaseStream.Position += 0x20 - 0x8;
@@ -117,15 +118,16 @@ namespace CLI
                             }
                             
                             string outputFormat = "{{\"FourCC\" : \"{0}\", \"Category\" : \"Uncategorized\", \"TechnicalName\" : \"{1}\", \"DisplayName\" : \"{1}\", \"Keywords\" : [\"uncategorized\"]}},";
-                            string outText = string.Format(outputFormat, fourCC, name);
+                            string outText = string.Format(outputFormat, chunks[k].FourCC, name);
                             formattedData.Add(outText);
                         }
 
 
                     }
 
-                    if (fourCC.StartsWith("SCO"))
+                    if (chunks[k].FourCC.StartsWith("SCO"))
                     {
+                        chunks[k].FourCC = "SCOB";
                         reader.BaseStream.Position = chunks[k].ChunkOffset;
                         for (int i = 0; i < chunks[k].ElementCount; i++)
                         {
@@ -134,14 +136,15 @@ namespace CLI
 
                             //string outputFormat = "{\"FourCC\" : \"{0}\", \"Category\" : \"Uncategorized\", \"TechnicalName\" : \"{1}\", \"DisplayName\" : \"{1}\", \"Keywords\" : [\"uncategorized\"]},";
                             string outputFormat = "{{\"FourCC\" : \"{0}\", \"Category\" : \"Uncategorized\", \"TechnicalName\" : \"{1}\", \"DisplayName\" : \"{1}\", \"Keywords\" : [\"uncategorized\"]}},";
-                            string outText = string.Format(outputFormat, fourCC, name);
+                            string outText = string.Format(outputFormat, chunks[k].FourCC, name);
                             formattedData.Add(outText);
 
                         }
                     }
 
-                    if (fourCC == "TGDR")
+                    if (chunks[k].FourCC == "TGDR")
                     {
+                        chunks[k].FourCC = "TGDR";
                         reader.BaseStream.Position = chunks[k].ChunkOffset;
                         for (int i = 0; i < chunks[k].ElementCount; i++)
                         {
@@ -151,13 +154,47 @@ namespace CLI
                             //string outputFormat = "{\"FourCC\" : \"{0}\", \"Category\" : \"Uncategorized\", \"TechnicalName\" : \"{1}\", \"DisplayName\" : \"{1}\", \"Keywords\" : [\"uncategorized\"]},";
                             string outputFormat = "{{\"FourCC\" : \"{0}\", \"Category\" : \"Uncategorized\", \"TechnicalName\" : \"{1}\", \"DisplayName\" : \"{1}\", \"Keywords\" : [\"uncategorized\"]}},";
 
-                            string outText = string.Format(outputFormat, fourCC, name);
+                            string outText = string.Format(outputFormat, chunks[k].FourCC, name);
                             formattedData.Add(outText);
 
                         }
                     }
 
-                    if (fourCC.StartsWith("TRE"))
+                    if (chunks[k].FourCC.StartsWith("TRE"))
+                    {
+                        chunks[k].FourCC = "TRES";
+                        reader.BaseStream.Position = chunks[k].ChunkOffset;
+                        for (int i = 0; i < chunks[k].ElementCount; i++)
+                        {
+                            string name = reader.ReadString(8).Trim(new[] { '\0' });
+                            reader.BaseStream.Position += 0x20 - 0x8;
+
+                            //string outputFormat = "{\"FourCC\" : \"{0}\", \"Category\" : \"Uncategorized\", \"TechnicalName\" : \"{1}\", \"DisplayName\" : \"{1}\", \"Keywords\" : [\"uncategorized\"]},";
+                            string outputFormat = "{{\"FourCC\" : \"{0}\", \"Category\" : \"Uncategorized\", \"TechnicalName\" : \"{1}\", \"DisplayName\" : \"{1}\", \"Keywords\" : [\"uncategorized\"]}},";
+                            string outText = string.Format(outputFormat, chunks[k].FourCC, name);
+                            formattedData.Add(outText);
+
+                        }
+                    }
+
+                    if (chunks[k].FourCC == "DOOR")
+                    {
+                        chunks[k].FourCC = "DOOR";
+                        reader.BaseStream.Position = chunks[k].ChunkOffset;
+                        for (int i = 0; i < chunks[k].ElementCount; i++)
+                        {
+                            string name = reader.ReadString(8).Trim(new[] { '\0' });
+                            reader.BaseStream.Position += 0x24 - 0x8;
+
+                            //string outputFormat = "{\"FourCC\" : \"{0}\", \"Category\" : \"Uncategorized\", \"TechnicalName\" : \"{1}\", \"DisplayName\" : \"{1}\", \"Keywords\" : [\"uncategorized\"]},";
+                            string outputFormat = "{{\"FourCC\" : \"{0}\", \"Category\" : \"Uncategorized\", \"TechnicalName\" : \"{1}\", \"DisplayName\" : \"{1}\", \"Keywords\" : [\"uncategorized\"]}},";
+                            string outText = string.Format(outputFormat, chunks[k].FourCC, name);
+                            formattedData.Add(outText);
+
+                        }
+                    }
+
+                    if (chunks[k].FourCC == "TGOB")
                     {
                         reader.BaseStream.Position = chunks[k].ChunkOffset;
                         for (int i = 0; i < chunks[k].ElementCount; i++)
@@ -167,13 +204,13 @@ namespace CLI
 
                             //string outputFormat = "{\"FourCC\" : \"{0}\", \"Category\" : \"Uncategorized\", \"TechnicalName\" : \"{1}\", \"DisplayName\" : \"{1}\", \"Keywords\" : [\"uncategorized\"]},";
                             string outputFormat = "{{\"FourCC\" : \"{0}\", \"Category\" : \"Uncategorized\", \"TechnicalName\" : \"{1}\", \"DisplayName\" : \"{1}\", \"Keywords\" : [\"uncategorized\"]}},";
-                            string outText = string.Format(outputFormat, fourCC, name);
+                            string outText = string.Format(outputFormat, chunks[k].FourCC, name);
                             formattedData.Add(outText);
 
                         }
                     }
 
-                    if (fourCC == "DOOR")
+                    if (chunks[k].FourCC == "TGSC")
                     {
                         reader.BaseStream.Position = chunks[k].ChunkOffset;
                         for (int i = 0; i < chunks[k].ElementCount; i++)
@@ -183,39 +220,7 @@ namespace CLI
 
                             //string outputFormat = "{\"FourCC\" : \"{0}\", \"Category\" : \"Uncategorized\", \"TechnicalName\" : \"{1}\", \"DisplayName\" : \"{1}\", \"Keywords\" : [\"uncategorized\"]},";
                             string outputFormat = "{{\"FourCC\" : \"{0}\", \"Category\" : \"Uncategorized\", \"TechnicalName\" : \"{1}\", \"DisplayName\" : \"{1}\", \"Keywords\" : [\"uncategorized\"]}},";
-                            string outText = string.Format(outputFormat, fourCC, name);
-                            formattedData.Add(outText);
-
-                        }
-                    }
-
-                    if (fourCC == "TGOB")
-                    {
-                        reader.BaseStream.Position = chunks[k].ChunkOffset;
-                        for (int i = 0; i < chunks[k].ElementCount; i++)
-                        {
-                            string name = reader.ReadString(8).Trim(new[] { '\0' });
-                            reader.BaseStream.Position += 0x20 - 0x8;
-
-                            //string outputFormat = "{\"FourCC\" : \"{0}\", \"Category\" : \"Uncategorized\", \"TechnicalName\" : \"{1}\", \"DisplayName\" : \"{1}\", \"Keywords\" : [\"uncategorized\"]},";
-                            string outputFormat = "{{\"FourCC\" : \"{0}\", \"Category\" : \"Uncategorized\", \"TechnicalName\" : \"{1}\", \"DisplayName\" : \"{1}\", \"Keywords\" : [\"uncategorized\"]}},";
-                            string outText = string.Format(outputFormat, fourCC, name);
-                            formattedData.Add(outText);
-
-                        }
-                    }
-
-                    if (fourCC == "TGSC")
-                    {
-                        reader.BaseStream.Position = chunks[k].ChunkOffset;
-                        for (int i = 0; i < chunks[k].ElementCount; i++)
-                        {
-                            string name = reader.ReadString(8).Trim(new[] { '\0' });
-                            reader.BaseStream.Position += 0x24 - 0x8;
-
-                            //string outputFormat = "{\"FourCC\" : \"{0}\", \"Category\" : \"Uncategorized\", \"TechnicalName\" : \"{1}\", \"DisplayName\" : \"{1}\", \"Keywords\" : [\"uncategorized\"]},";
-                            string outputFormat = "{{\"FourCC\" : \"{0}\", \"Category\" : \"Uncategorized\", \"TechnicalName\" : \"{1}\", \"DisplayName\" : \"{1}\", \"Keywords\" : [\"uncategorized\"]}},";
-                            string outText = string.Format(outputFormat, fourCC, name);
+                            string outText = string.Format(outputFormat, chunks[k].FourCC, name);
                             formattedData.Add(outText);
 
                         }

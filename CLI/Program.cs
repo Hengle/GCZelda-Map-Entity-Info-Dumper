@@ -28,22 +28,22 @@ namespace CLI
         static void Main(string[] args)
         {
             string folderRoot = @"E:\New_Data_Drive\WindwakerModding\De-Arc-ed Stage\";
+            Console.WriteLine("Enter the filepath to the root folder of all Stages (ie: C:/WW/root/Stage/)");
+            //string folderRoot = Console.ReadLine();
             DirectoryInfo dirInfo = new DirectoryInfo(folderRoot);
 
-            string[] formattedOldData = File.ReadAllLines(@"C:\Users\Matt\Desktop\outputjson.json");
-            HashSet<string> formattedNewData = new HashSet<string>();
             while(true)
             {
                 Console.Clear();
-                Console.WriteLine("Enter the FourCC to investigate:");
-                string fourCC = Console.ReadLine();
+                Console.WriteLine("Enter the ACTR/SCOB/TRES/DOOR/etc. Name to investigate:");
+                string objName = Console.ReadLine();
 
                 foreach (var map in dirInfo.GetDirectories())
                 {
                     DirectoryInfo mapDirInfo = new DirectoryInfo(map.FullName);
                     foreach (var scene in map.GetDirectories())
                     {
-                        ProcessEntitiesForScene(scene.FullName, mapDirInfo.Name, fourCC, formattedNewData);
+                        ProcessEntitiesForScene(scene.FullName, mapDirInfo.Name, objName);
                     }
                 }
 
@@ -52,17 +52,9 @@ namespace CLI
                 if (keyInfo.Key == ConsoleKey.Escape)
                     break;
             }
-
-            foreach(var str in formattedOldData)
-            {
-                if (formattedNewData.Contains(str))
-                    formattedNewData.Remove(str);
-            }
-
-            File.WriteAllLines("C:/Users/Matt/Desktop/outputjson_delta.json", formattedNewData.ToArray());
         }
 
-        private static void ProcessEntitiesForScene(string folder, string mapName, string fourCC, HashSet<string> formattedData)
+        private static void ProcessEntitiesForScene(string folder, string mapName, string objName)
         {
             // Check for a DZS/DZR sub-folder.
             string subFolder = string.Empty;
@@ -111,18 +103,10 @@ namespace CLI
                         {
                             string name = reader.ReadString(8).Trim(new[] { '\0' });
                             reader.BaseStream.Position += 0x20 - 0x8;
-
-                            if(name == "TestPo")
-                            {
-                                Console.WriteLine("Weird.");
-                            }
-                            
-                            string outputFormat = "{{\"FourCC\" : \"{0}\", \"Category\" : \"Uncategorized\", \"TechnicalName\" : \"{1}\", \"DisplayName\" : \"{1}\", \"Keywords\" : [\"uncategorized\"]}},";
-                            string outText = string.Format(outputFormat, chunks[k].FourCC, name);
-                            formattedData.Add(outText);
+                         
+                            if(name == objName)
+                                Console.WriteLine("{0} - {1} ({2})", objName, mapName, folder.Substring(file.LastIndexOf("\\")));
                         }
-
-
                     }
 
                     if (chunks[k].FourCC.StartsWith("SCO"))
@@ -134,10 +118,8 @@ namespace CLI
                             string name = reader.ReadString(8).Trim(new[] { '\0' });
                             reader.BaseStream.Position += 0x24 - 0x8;
 
-                            //string outputFormat = "{\"FourCC\" : \"{0}\", \"Category\" : \"Uncategorized\", \"TechnicalName\" : \"{1}\", \"DisplayName\" : \"{1}\", \"Keywords\" : [\"uncategorized\"]},";
-                            string outputFormat = "{{\"FourCC\" : \"{0}\", \"Category\" : \"Uncategorized\", \"TechnicalName\" : \"{1}\", \"DisplayName\" : \"{1}\", \"Keywords\" : [\"uncategorized\"]}},";
-                            string outText = string.Format(outputFormat, chunks[k].FourCC, name);
-                            formattedData.Add(outText);
+                            if (name == objName)
+                                Console.WriteLine("{0} - {1} ({2})", objName, mapName, folder.Substring(file.LastIndexOf("\\")));
 
                         }
                     }
@@ -151,11 +133,8 @@ namespace CLI
                             string name = reader.ReadString(8).Trim(new[] { '\0' });
                             reader.BaseStream.Position += 0x24 - 0x8;
 
-                            //string outputFormat = "{\"FourCC\" : \"{0}\", \"Category\" : \"Uncategorized\", \"TechnicalName\" : \"{1}\", \"DisplayName\" : \"{1}\", \"Keywords\" : [\"uncategorized\"]},";
-                            string outputFormat = "{{\"FourCC\" : \"{0}\", \"Category\" : \"Uncategorized\", \"TechnicalName\" : \"{1}\", \"DisplayName\" : \"{1}\", \"Keywords\" : [\"uncategorized\"]}},";
-
-                            string outText = string.Format(outputFormat, chunks[k].FourCC, name);
-                            formattedData.Add(outText);
+                            if (name == objName)
+                                Console.WriteLine("{0} - {1} ({2})", objName, mapName, folder.Substring(file.LastIndexOf("\\")));
 
                         }
                     }
@@ -169,10 +148,8 @@ namespace CLI
                             string name = reader.ReadString(8).Trim(new[] { '\0' });
                             reader.BaseStream.Position += 0x20 - 0x8;
 
-                            //string outputFormat = "{\"FourCC\" : \"{0}\", \"Category\" : \"Uncategorized\", \"TechnicalName\" : \"{1}\", \"DisplayName\" : \"{1}\", \"Keywords\" : [\"uncategorized\"]},";
-                            string outputFormat = "{{\"FourCC\" : \"{0}\", \"Category\" : \"Uncategorized\", \"TechnicalName\" : \"{1}\", \"DisplayName\" : \"{1}\", \"Keywords\" : [\"uncategorized\"]}},";
-                            string outText = string.Format(outputFormat, chunks[k].FourCC, name);
-                            formattedData.Add(outText);
+                            if (name == objName)
+                                Console.WriteLine("{0} - {1} ({2})", objName, mapName, folder.Substring(file.LastIndexOf("\\")));
 
                         }
                     }
@@ -186,10 +163,8 @@ namespace CLI
                             string name = reader.ReadString(8).Trim(new[] { '\0' });
                             reader.BaseStream.Position += 0x24 - 0x8;
 
-                            //string outputFormat = "{\"FourCC\" : \"{0}\", \"Category\" : \"Uncategorized\", \"TechnicalName\" : \"{1}\", \"DisplayName\" : \"{1}\", \"Keywords\" : [\"uncategorized\"]},";
-                            string outputFormat = "{{\"FourCC\" : \"{0}\", \"Category\" : \"Uncategorized\", \"TechnicalName\" : \"{1}\", \"DisplayName\" : \"{1}\", \"Keywords\" : [\"uncategorized\"]}},";
-                            string outText = string.Format(outputFormat, chunks[k].FourCC, name);
-                            formattedData.Add(outText);
+                            if (name == objName)
+                                Console.WriteLine("{0} - {1} ({2})", objName, mapName, folder.Substring(file.LastIndexOf("\\")));
 
                         }
                     }
@@ -202,10 +177,8 @@ namespace CLI
                             string name = reader.ReadString(8).Trim(new[] { '\0' });
                             reader.BaseStream.Position += 0x20 - 0x8;
 
-                            //string outputFormat = "{\"FourCC\" : \"{0}\", \"Category\" : \"Uncategorized\", \"TechnicalName\" : \"{1}\", \"DisplayName\" : \"{1}\", \"Keywords\" : [\"uncategorized\"]},";
-                            string outputFormat = "{{\"FourCC\" : \"{0}\", \"Category\" : \"Uncategorized\", \"TechnicalName\" : \"{1}\", \"DisplayName\" : \"{1}\", \"Keywords\" : [\"uncategorized\"]}},";
-                            string outText = string.Format(outputFormat, chunks[k].FourCC, name);
-                            formattedData.Add(outText);
+                            if (name == objName)
+                                Console.WriteLine("{0} - {1} ({2})", objName, mapName, folder.Substring(file.LastIndexOf("\\")));
 
                         }
                     }
@@ -218,10 +191,8 @@ namespace CLI
                             string name = reader.ReadString(8).Trim(new[] { '\0' });
                             reader.BaseStream.Position += 0x24 - 0x8;
 
-                            //string outputFormat = "{\"FourCC\" : \"{0}\", \"Category\" : \"Uncategorized\", \"TechnicalName\" : \"{1}\", \"DisplayName\" : \"{1}\", \"Keywords\" : [\"uncategorized\"]},";
-                            string outputFormat = "{{\"FourCC\" : \"{0}\", \"Category\" : \"Uncategorized\", \"TechnicalName\" : \"{1}\", \"DisplayName\" : \"{1}\", \"Keywords\" : [\"uncategorized\"]}},";
-                            string outText = string.Format(outputFormat, chunks[k].FourCC, name);
-                            formattedData.Add(outText);
+                            if (name == objName)
+                                Console.WriteLine("{0} - {1} ({2})", objName, mapName, folder.Substring(file.LastIndexOf("\\")));
 
                         }
                     }

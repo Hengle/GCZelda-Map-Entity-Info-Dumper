@@ -4,11 +4,11 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
+using System.Text.RegularExpressions;
 
 namespace CLI
 {
-    class Program
+    public static class Program
     {
         private sealed class ChunkHeader
         {
@@ -27,34 +27,49 @@ namespace CLI
 
         static void Main(string[] args)
         {
-            string folderRoot = @"E:\New_Data_Drive\WindwakerModding\De-Arc-ed Stage\";
-            Console.WriteLine("Enter the filepath to the root folder of all Stages (ie: C:/WW/root/Stage/)");
-            //string folderRoot = Console.ReadLine();
+            //string folderRoot = @"E:\New_Data_Drive\WindwakerModding\tpstagedumps\Stage\";
+
+            string folderRoot = string.Empty;
+            do
+            {
+                Console.WriteLine("Enter the filepath to the root folder of all Stages (ie: C:/WW/root/Stage/)");
+                folderRoot = Console.ReadLine();
+            }
+            while (!Directory.Exists(folderRoot));
+
+            string userDecision = string.Empty;
+            do
+            {
+                Console.WriteLine("Does this path contain Twilight Princess rooms? Type Y or N.");
+                userDecision = Console.ReadLine();
+            }
+            while (userDecision != "Y" && userDecision != "N");
+            bool skipSCLSChunk = userDecision == "Y";
+
             DirectoryInfo dirInfo = new DirectoryInfo(folderRoot);
 
-            while(true)
+            StringBuilder outputStrs = new StringBuilder();
+            outputStrs.AppendLine("Stage, Room, EntityName, Value");
+
+            foreach (var map in dirInfo.GetDirectories())
             {
-                Console.Clear();
-                Console.WriteLine("Enter the ACTR/SCOB/TRES/DOOR/etc. Name to investigate:");
-                string objName = Console.ReadLine();
-
-                foreach (var map in dirInfo.GetDirectories())
+                Console.WriteLine("Processing Map/Scene: {0}", map.Name);
+                DirectoryInfo mapDirInfo = new DirectoryInfo(map.FullName);
+                DirectoryInfo[] sortedDirs = map.GetDirectories().OrderByNatural(x => x.Name).ToArray();
+                foreach (var scene in sortedDirs)
                 {
-                    DirectoryInfo mapDirInfo = new DirectoryInfo(map.FullName);
-                    foreach (var scene in map.GetDirectories())
-                    {
-                        ProcessEntitiesForScene(scene.FullName, mapDirInfo.Name, objName);
-                    }
+                    Console.WriteLine("Processing Room: {0}", scene.Name);
+                    ProcessEntitiesForScene(scene.FullName, mapDirInfo.Name, outputStrs, map.Name, scene.Name, skipSCLSChunk);
                 }
-
-                Console.WriteLine("Finished. Press any key.");
-                var keyInfo = Console.ReadKey();
-                if (keyInfo.Key == ConsoleKey.Escape)
-                    break;
             }
+
+            Console.WriteLine("Finished. Press any key.");
+            Console.ReadKey();
+
+            File.WriteAllText(@"EntityList.csv", outputStrs.ToString());
         }
 
-        private static void ProcessEntitiesForScene(string folder, string mapName, string objName)
+        private static void ProcessEntitiesForScene(string folder, string mapName, StringBuilder output, string newMapName, string newSceneName, bool skipSCLSChunk)
         {
             // Check for a DZS/DZR sub-folder.
             string subFolder = string.Empty;
@@ -93,83 +108,65 @@ namespace CLI
                     chunks.Add(chunk);
                 }
 
-                for(int k = 0; k < chunkCount; k++)
+                for (int k = 0; k < chunkCount; k++)
                 {
                     if (chunks[k].FourCC.StartsWith("ACT"))
                     {
-                        chunks[k].FourCC = "ACTR";
-                        reader.BaseStream.Position = chunks[k].ChunkOffset;
-                        for (int i = 0; i < chunks[k].ElementCount; i++)
-                        {
-                            string name = reader.ReadString(8).Trim(new[] { '\0' });
-                            reader.BaseStream.Position += 0x20 - 0x8;
-                         
-                            if(name == objName)
-                                Console.WriteLine("{0} - {1} ({2})", objName, mapName, folder.Substring(file.LastIndexOf("\\")));
-                        }
-                    }
-
-                    if (chunks[k].FourCC.StartsWith("SCO"))
-                    {
-                        chunks[k].FourCC = "SCOB";
-                        reader.BaseStream.Position = chunks[k].ChunkOffset;
-                        for (int i = 0; i < chunks[k].ElementCount; i++)
-                        {
-                            string name = reader.ReadString(8).Trim(new[] { '\0' });
-                            reader.BaseStream.Position += 0x24 - 0x8;
-
-                            if (name == objName)
-                                Console.WriteLine("{0} - {1} ({2})", objName, mapName, folder.Substring(file.LastIndexOf("\\")));
-
-                        }
-                    }
-
-                    if (chunks[k].FourCC == "TGDR")
-                    {
-                        chunks[k].FourCC = "TGDR";
-                        reader.BaseStream.Position = chunks[k].ChunkOffset;
-                        for (int i = 0; i < chunks[k].ElementCount; i++)
-                        {
-                            string name = reader.ReadString(8).Trim(new[] { '\0' });
-                            reader.BaseStream.Position += 0x24 - 0x8;
-
-                            if (name == objName)
-                                Console.WriteLine("{0} - {1} ({2})", objName, mapName, folder.Substring(file.LastIndexOf("\\")));
-
-                        }
-                    }
-
-                    if (chunks[k].FourCC.StartsWith("TRE"))
-                    {
-                        chunks[k].FourCC = "TRES";
                         reader.BaseStream.Position = chunks[k].ChunkOffset;
                         for (int i = 0; i < chunks[k].ElementCount; i++)
                         {
                             string name = reader.ReadString(8).Trim(new[] { '\0' });
                             reader.BaseStream.Position += 0x20 - 0x8;
 
-                            if (name == objName)
-                                Console.WriteLine("{0} - {1} ({2})", objName, mapName, folder.Substring(file.LastIndexOf("\\")));
-
+                            output.AppendFormat("{0}, {1}, {2}, {3}\n", newMapName, newSceneName, chunks[k].FourCC, name);
                         }
                     }
-
-                    if (chunks[k].FourCC == "DOOR")
+                    else if (chunks[k].FourCC.StartsWith("SCO"))
                     {
-                        chunks[k].FourCC = "DOOR";
                         reader.BaseStream.Position = chunks[k].ChunkOffset;
                         for (int i = 0; i < chunks[k].ElementCount; i++)
                         {
                             string name = reader.ReadString(8).Trim(new[] { '\0' });
                             reader.BaseStream.Position += 0x24 - 0x8;
 
-                            if (name == objName)
-                                Console.WriteLine("{0} - {1} ({2})", objName, mapName, folder.Substring(file.LastIndexOf("\\")));
+                            output.AppendFormat("{0}, {1}, {2}, {3}\n", newMapName, newSceneName, chunks[k].FourCC, name);
+                        }
+                    }
+                    else if (chunks[k].FourCC == "TGDR")
+                    {
+                        reader.BaseStream.Position = chunks[k].ChunkOffset;
+                        for (int i = 0; i < chunks[k].ElementCount; i++)
+                        {
+                            string name = reader.ReadString(8).Trim(new[] { '\0' });
+                            reader.BaseStream.Position += 0x24 - 0x8;
+
+                            output.AppendFormat("{0}, {1}, {2}, {3}\n", newMapName, newSceneName, chunks[k].FourCC, name);
 
                         }
                     }
+                    else if (chunks[k].FourCC.StartsWith("TRE"))
+                    {
+                        reader.BaseStream.Position = chunks[k].ChunkOffset;
+                        for (int i = 0; i < chunks[k].ElementCount; i++)
+                        {
+                            string name = reader.ReadString(8).Trim(new[] { '\0' });
+                            reader.BaseStream.Position += 0x20 - 0x8;
+                            output.AppendFormat("{0}, {1}, {2}, {3}\n", newMapName, newSceneName, chunks[k].FourCC, name);
 
-                    if (chunks[k].FourCC == "TGOB")
+                        }
+                    }
+                    else if (chunks[k].FourCC == "DOOR")
+                    {
+                        reader.BaseStream.Position = chunks[k].ChunkOffset;
+                        for (int i = 0; i < chunks[k].ElementCount; i++)
+                        {
+                            string name = reader.ReadString(8).Trim(new[] { '\0' });
+                            reader.BaseStream.Position += 0x24 - 0x8;
+                            output.AppendFormat("{0}, {1}, {2}, {3}\n", newMapName, newSceneName, chunks[k].FourCC, name);
+
+                        }
+                    }
+                    else if (chunks[k].FourCC == "TGOB")
                     {
                         reader.BaseStream.Position = chunks[k].ChunkOffset;
                         for (int i = 0; i < chunks[k].ElementCount; i++)
@@ -177,27 +174,61 @@ namespace CLI
                             string name = reader.ReadString(8).Trim(new[] { '\0' });
                             reader.BaseStream.Position += 0x20 - 0x8;
 
-                            if (name == objName)
-                                Console.WriteLine("{0} - {1} ({2})", objName, mapName, folder.Substring(file.LastIndexOf("\\")));
-
+                            output.AppendFormat("{0}, {1}, {2}, {3}\n", newMapName, newSceneName, chunks[k].FourCC, name);
                         }
                     }
-
-                    if (chunks[k].FourCC == "TGSC")
+                    else if (chunks[k].FourCC == "TGSC")
                     {
                         reader.BaseStream.Position = chunks[k].ChunkOffset;
                         for (int i = 0; i < chunks[k].ElementCount; i++)
                         {
                             string name = reader.ReadString(8).Trim(new[] { '\0' });
                             reader.BaseStream.Position += 0x24 - 0x8;
-
-                            if (name == objName)
-                                Console.WriteLine("{0} - {1} ({2})", objName, mapName, folder.Substring(file.LastIndexOf("\\")));
-
+                            output.AppendFormat("{0}, {1}, {2}, {3}\n", newMapName, newSceneName, chunks[k].FourCC, name);
                         }
+                    }
+                    else if(!skipSCLSChunk && chunks[k].FourCC == "SCLS")
+                    {
+                        reader.BaseStream.Position = chunks[k].ChunkOffset;
+                        for (int i = 0; i < chunks[k].ElementCount; i++)
+                        {
+                            string name = reader.ReadString(8).Trim(new[] { '\0' });
+                            byte spawnNum = reader.ReadByte();
+                            byte destRoomNum = reader.ReadByte();
+                            byte fadeType = reader.ReadByte();
+                            reader.Skip(1);
+
+                            byte low = (byte)(spawnNum & 0xF);
+                            byte high = (byte)((spawnNum & 0xF0) >> 4);
+                            output.AppendFormat("{0}, {1}, {2}, {3}\n", newMapName, newSceneName, chunks[k].FourCC, name);
+                        }
+                    }
+                    else
+                    {
+                        output.AppendFormat("{0}, {1}, {2}, {3}\n", newMapName, newSceneName, chunks[k].FourCC, "");
                     }
                 }
             }
+        }
+
+        /// <summary>
+        /// Orders a given list by Natural sort. Natural sort is what is most commonly expected (as compared to Alphabetical Sort) when sorting, especially
+        /// when dealing with things with numbers on the end. Natural sort will put it as 1, 2,... 9, 10 while Alphabetical sort puts it as 1, 10, 2, ... 9, 99.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="items">List of items to sort</param>
+        /// <param name="selector">Which parameter of the item to sort by</param>
+        /// <param name="stringComparer">Override the string comparerator if needed.</param>
+        /// <returns></returns>
+        public static IEnumerable<T> OrderByNatural<T>(this IEnumerable<T> items, Func<T, string> selector, StringComparer stringComparer = null)
+        {
+            var regex = new Regex(@"\d+", RegexOptions.Compiled);
+
+            int maxDigits = items
+                          .SelectMany(i => regex.Matches(selector(i)).Cast<Match>().Select(digitChunk => (int?)digitChunk.Value.Length))
+                          .Max() ?? 0;
+
+            return items.OrderBy(i => regex.Replace(selector(i), match => match.Value.PadLeft(maxDigits, '0')), stringComparer ?? StringComparer.CurrentCulture);
         }
     }
 }

@@ -33,7 +33,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="EndianBinaryStreams">
-      <HintPath>..\..\WArchive-Tools\WArchive Tools\EndianBinaryStreams.dll</HintPath>
+      <HintPath>..\EndianBinaryStreams.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
